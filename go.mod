@@ -1,6 +1,6 @@
 module github.com/Nikhil690/pfcpgolb
 
-go 1.22.5
+go 1.21.1
 
 require github.com/sirupsen/logrus v1.9.3
 
