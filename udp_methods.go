@@ -199,3 +199,7 @@ func (pfcpServer *PfcpServer) WriteResponseTo(resMsg *PFCPMessage, addr *net.UDP
 
 	go pfcpServer.StartResTxLifeCycle(tx)
 }
+
+func (pfcpServer *PfcpServer) Close() error {
+	return pfcpServer.Conn.Close()
+}

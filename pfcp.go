@@ -1,7 +1,8 @@
 package pfcpgolb
 
-import(
-
+import (
+    "net"
+	logger "github.com/sirupsen/logrus"
 )
 
 type MessageType uint8
@@ -318,3 +319,22 @@ const (
     SEID_PRESENT     = 1
 )
 
+func (m *Message) MessageType() MessageType {
+	return m.PfcpMessage.Header.MessageType
+}
+
+func (n *NodeID) ResolveNodeIdToIp() net.IP {
+	switch n.NodeIdType {
+	case NodeIdTypeIpv4Address, NodeIdTypeIpv6Address:
+		return n.IP
+	case NodeIdTypeFqdn:
+		if ns, err := net.LookupHost(n.FQDN); err != nil {
+			logger.Warnf("Host lookup failed: %+v", err)
+			return net.IPv4zero
+		} else {
+			return net.ParseIP(ns[0])
+		}
+	default:
+		return net.IPv4zero
+	}
+}

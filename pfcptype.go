@@ -6,6 +6,14 @@ import (
 )
 
 const (
+	PDNTypeIpv4 uint8 = iota + 1
+	PDNTypeIpv6
+	PDNTypeIpv4v6
+	PDNTypeNonIp
+	PDNTypeEthernet
+)
+
+const (
 	OuterHeaderRemovalGtpUUdpIpv4 uint8 = iota
 	OuterHeaderRemovalGtpUUdpIpv6
 	OuterHeaderRemovalUdpIpv4
