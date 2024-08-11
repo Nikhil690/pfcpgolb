@@ -117,6 +117,20 @@ func (pfcpServer *PfcpServer) StartReqTxLifeCycle(tx *Transaction) (resMsg *Mess
 		return NewMessage(event.RemoteAddr, event.RcvMsg), nil
 }
 
+func (pfcpServer *PfcpServer) StartResTxLifeCycle(tx *Transaction) {
+	// Start Transaction
+	err := tx.StartSendingResponse()
+	if err != nil {
+		logger.Warnf("SendingResponse error: %+v", err)
+		return
+	}
+	// End Transaction
+	err = pfcpServer.RemoveTransaction(tx)
+	if err != nil {
+		logger.Warnf("RemoveTransaction error: %+v", err)
+	}
+}
+
 func (pfcpServer *PfcpServer) RemoveTransaction(tx *Transaction) (err error) {
 	logger.Traceln("In RemoveTransaction")
 	consumerAddr := tx.ConsumerAddr
@@ -135,7 +149,7 @@ func (pfcpServer *PfcpServer) RemoveTransaction(tx *Transaction) (err error) {
 		logger.Warnln("In RemoveTransaction")
 		logger.Warnln("Consumer IP: ", consumerAddr)
 		logger.Warnln("Sequence number ", tx.SequenceNumber, " doesn't exist!")
-		err = fmt.Errorf("Remove tx error: transaction [%d] doesn't exist", tx.SequenceNumber)
+		err = fmt.Errorf("remove tx error: transaction [%d] doesn't exist", tx.SequenceNumber)
 	}
 
 	logger.Traceln("End RemoveTransaction")
@@ -161,4 +175,27 @@ func (pfcpServer *PfcpServer) WriteRequestTo(reqMsg *PFCPMessage, addr *net.UDPA
 	}
 
 	return pfcpServer.StartReqTxLifeCycle(tx)
+}
+
+func (pfcpServer *PfcpServer) WriteResponseTo(resMsg *PFCPMessage, addr *net.UDPAddr) {
+	if !resMsg.IsResponse() {
+		logger.Warn("not a response message")
+		return
+	}
+
+	buf, err := resMsg.Marshal()
+	if err != nil {
+		logger.Warnf("marshal error: %+v", err)
+		return
+	}
+
+	tx := NewTransaction(resMsg, buf, pfcpServer.Conn, addr)
+
+	err = pfcpServer.PutTransaction(tx)
+	if err != nil {
+		logger.Warnf("PutTransaction error: %+v", err)
+		return
+	}
+
+	go pfcpServer.StartResTxLifeCycle(tx)
 }
